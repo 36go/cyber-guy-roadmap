@@ -1,0 +1,347 @@
+<html>
+<style>
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; direction: rtl; }
+  .container { max-width: 100%; padding: 0; }
+  .phase { margin-bottom: 2rem; padding: 1.25rem; background: var(--color-background-secondary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); }
+  .phase-title { font-size: 18px; font-weight: 500; margin: 0 0 1rem 0; color: var(--color-text-primary); display: flex; align-items: center; gap: 8px; }
+  .phase-title i { font-size: 20px; }
+  .phase-duration { font-size: 12px; color: var(--color-text-secondary); margin-top: 0.5rem; font-weight: 400; }
+  .content-list { margin: 0; padding-right: 20px; list-style: none; }
+  .content-list li { margin: 0.75rem 0; font-size: 14px; color: var(--color-text-primary); position: relative; padding-right: 12px; }
+  .content-list li:before { content: "◀"; position: absolute; right: 0; color: var(--color-text-secondary); }
+  .topic { margin: 1rem 0; padding: 0.75rem; background: var(--color-background-primary); border-right: 3px solid var(--color-border-info); border-radius: 4px; font-size: 14px; }
+  .topic-label { font-weight: 500; color: var(--color-text-info); display: block; margin-bottom: 0.25rem; }
+  .topic-text { color: var(--color-text-primary); margin: 0; }
+  .button-group { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; justify-content: flex-end; }
+  button { padding: 8px 16px; background: transparent; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 13px; cursor: pointer; color: var(--color-text-primary); transition: all 0.2s; }
+  button:hover { background: var(--color-background-secondary); }
+  .toggle-btn { padding: 8px 12px; }
+  .expanded { display: none; }
+  .expanded.show { display: block; }
+  .expand-icon { display: inline-block; transition: transform 0.2s; margin-left: 8px; }
+  .expand-icon.rotated { transform: rotate(90deg); }
+</style>
+
+<div class="container">
+  <!-- المرحلة 1 -->
+  <div class="phase">
+    <div class="phase-title">
+      <i class="ti ti-book"></i>
+      المرحلة 1: الأساسيات (3-4 أشهر)
+    </div>
+    <p class="phase-duration">بناء المعرفة الأساسية: الشبكات والأنظمة والمفاهيم الأمنية</p>
+    
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'networking')">
+        أساسيات الشبكات
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="networking" class="expanded">
+        <div class="topic">
+          <span class="topic-label">المعرفة الأساسية:</span>
+          <p class="topic-text">نموذج OSI، TCP/IP، DNS، DHCP، HTTP/HTTPS، الجدران النارية، التوجيه، تقسيم الشبكات، المنافذ والبروتوكولات</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 أفضل الدورات:</span>
+          <p class="topic-text"><strong>Professor Messer Network+ (يوتيوب):</strong> سلسلة شاملة مجانية (40+ ساعة)</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 دورات Udemy:</span>
+          <p class="topic-text"><strong>Complete Networking بـ David Bombal:</strong> عملي وشامل (~15 ساعة)</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'operating')">
+        أنظمة التشغيل
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="operating" class="expanded">
+        <div class="topic">
+          <span class="topic-label">النقاط الرئيسية:</span>
+          <p class="topic-text">Windows (Active Directory)، Linux (نظام الملفات والمستخدمين والأذونات والـ CLI)، العمليات والخدمات</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 دورات مجانية:</span>
+          <p class="topic-text"><strong>NetworkChuck - Linux Crash Course:</strong> (10 ساعات) عملي وسهل للمبتدئين</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 شرح شامل:</span>
+          <p class="topic-text"><strong>Professor Messer - CompTIA A+:</strong> يغطي Windows و Linux</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'languages1')">
+        لغات البرمجة
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="languages1" class="expanded">
+        <div class="topic">
+          <span class="topic-label">🐍 Python (الأولوية):</span>
+          <p class="topic-text">أساسي للكتابة والأتمتة والتحليل. ابدأ من هنا!</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 أفضل الدورات:</span>
+          <p class="topic-text"><strong>Corey Schafer - يوتيوب:</strong> سلسلة مجانية (25+ ساعة) | <strong>Complete Python Bootcamp - Udemy:</strong> (~22 ساعة)</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">🔧 Bash/Shell Scripting:</span>
+          <p class="topic-text">أتمتة مهام Linux، كتابة السكريبتات الأمنية</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 موارد:</span>
+          <p class="topic-text"><strong>NetworkChuck أو Ryan's Tutorials:</strong> (يوتيوب، مجاني)</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'security-basics')">
+        مقدمة الأمن السيبراني
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="security-basics" class="expanded">
+        <div class="topic">
+          <span class="topic-label">المواضيع:</span>
+          <p class="topic-text">CIA Triad (السرية والتكامل والتوافر)، التشفير الأساسي، المصادقة والتفويض، مشهد التهديدات</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 دورات:</span>
+          <p class="topic-text"><strong>Professor Messer - Security+ Basics:</strong> (مجاني على يوتيوب)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- المرحلة 2 -->
+  <div class="phase">
+    <div class="phase-title">
+      <i class="ti ti-search"></i>
+      المرحلة 2: الأمن الأساسي + OSINT (4-5 أشهر)
+    </div>
+    <p class="phase-duration">الهجمات والدفاعات والاستخبارات والأدوات العملية</p>
+    
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'osint')">
+        🕵️ استخبارات المصادر المفتوحة (OSINT)
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="osint" class="expanded">
+        <div class="topic">
+          <span class="topic-label">ما هو OSINT؟</span>
+          <p class="topic-text">جمع المعلومات من مصادر عامة متاحة على الإنترنت. أساسي للاستطلاع والتحقيق والتهديدات</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">مهارات OSINT:</span>
+          <p class="topic-text">البحث المتقدم بـ Google، تتبع الأشخاص والشركات، تحليل المجالات، التحليل الاجتماعي، البحث في السجلات العامة</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 أفضل الدورات:</span>
+          <p class="topic-text"><strong>John Hammond - OSINT Tutorials:</strong> (يوتيوب، مجاني)</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 دورة شاملة:</span>
+          <p class="topic-text"><strong>Udemy - "Complete OSINT" بـ Mike Bazzell:</strong> (~20 ساعة)</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">🔧 أدوات OSINT:</span>
+          <p class="topic-text"><strong>Shodan</strong> (البحث عن الأجهزة)، <strong>Google Dorking</strong>، <strong>Whois & DNS Lookup</strong>، <strong>TheHarvester</strong>، <strong>Maltego</strong>، <strong>Social-Searcher</strong>، <strong>URLScan</strong></p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">🎓 مواقع تطبيق:</span>
+          <p class="topic-text"><strong>OSINT-ME CTF</strong>، <strong>BypassCFI</strong> (تحديات OSINT عملية)</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'offensive')">
+        الهجوم والاختراق
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="offensive" class="expanded">
+        <div class="topic">
+          <span class="topic-label">الموضوعات:</span>
+          <p class="topic-text">الاستطلاع، الفحص والتعداد، الاستغلال، الهندسة الاجتماعية، SQL Injection، XSS، CSRF، الحصول على امتيازات</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 أساسي:</span>
+          <p class="topic-text"><strong>PortSwigger Web Security Academy:</strong> معامل تفاعلية مجانية (websecurity-academy.net)</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 دورة شاملة:</span>
+          <p class="topic-text"><strong>Zaid Sabih - Ethical Hacking:</strong> (Udemy، ~30 ساعة)</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'defensive')">
+        الدفاع والحماية
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="defensive" class="expanded">
+        <div class="topic">
+          <span class="topic-label">الموضوعات:</span>
+          <p class="topic-text">الجدران النارية، IDS/IPS، WAF، SIEM، حماية الأجهزة، الاستجابة للحوادث، تصلب النظام</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 دورات:</span>
+          <p class="topic-text"><strong>Cyberspatula - Splunk/ELK:</strong> (يوتيوب) | <strong>LinkedIn Learning - SIEM:</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'tools')">
+        🔧 أدوات الاختبار العملية
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="tools" class="expanded">
+        <div class="topic">
+          <span class="topic-label">الأدوات الأساسية:</span>
+          <p class="topic-text"><strong>Nmap</strong> (فحص)، <strong>Burp Suite</strong> (اختبار التطبيقات)، <strong>Metasploit</strong> (الاستغلال)، <strong>Wireshark</strong> (تحليل الحزم)، <strong>John the Ripper</strong> (كسر كلمات المرور)</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 شروحات:</span>
+          <p class="topic-text"><strong>NetworkChuck - Nmap:</strong> | <strong>Professor Messer - Wireshark:</strong></p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">🧪 معامل عملية:</span>
+          <p class="topic-text"><strong>TryHackMe.com</strong> (مبتدئ)، <strong>HackTheBox.eu</strong> (وسيط)، <strong>PentesterLab</strong> (احترافي)</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'languages2')">
+        لغات إضافية
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="languages2" class="expanded">
+        <div class="topic">
+          <span class="topic-label">📝 JavaScript/HTML/CSS:</span>
+          <p class="topic-text">لاختبار أمان التطبيقات. تعلم الأساسيات فقط</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">📹 دورة:</span>
+          <p class="topic-text"><strong>freeCodeCamp - Web Development:</strong> (4+ ساعات على يوتيوب)</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">SQL:</span>
+          <p class="topic-text">فهم حقن SQL. دورات W3Schools (مجاني)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- المرحلة 3 -->
+  <div class="phase">
+    <div class="phase-title">
+      <i class="ti ti-target"></i>
+      المرحلة 3: التخصص (3+ أشهر)
+    </div>
+    <p class="phase-duration">اختر مسارك والتزم به بعمق</p>
+    
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'paths')">
+        🎯 اختر تخصصك
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="paths" class="expanded">
+        <div class="topic">
+          <span class="topic-label">1️⃣ اختبار الاختراق (Pentesting)</span>
+          <p class="topic-text">ابحث عن الثغرات. الشهادات: CEH، OSCP</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">2️⃣ تحليل البرامج الضارة (Malware)</span>
+          <p class="topic-text">فك تشفير البرامج الضارة. الشهادات: GREM</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">3️⃣ الاستجابة للحوادث (Incident Response)</span>
+          <p class="topic-text">التحقيق من الاختراقات. الشهادات: GCIH</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">4️⃣ أمن السحابة (Cloud Security)</span>
+          <p class="topic-text">AWS/Azure/GCP. دورات ACloudGuru</p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">5️⃣ أمن تطبيقات الويب</span>
+          <p class="topic-text">OWASP Top 10. PortSwigger Academy (مجاني)</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin: 1rem 0;">
+      <button class="toggle-btn" onclick="toggleSection(this, 'certs')">
+        📜 الشهادات
+        <span class="expand-icon">◀</span>
+      </button>
+      <div id="certs" class="expanded">
+        <div class="topic">
+          <span class="topic-label">شهادات للمبتدئين:</span>
+          <p class="topic-text"><strong>CompTIA Security+</strong>، <strong>CEH Associate</strong></p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">شهادات متوسطة:</span>
+          <p class="topic-text"><strong>CEH</strong> (Certified Ethical Hacker)، <strong>GIAC GSEC</strong></p>
+        </div>
+        <div class="topic">
+          <span class="topic-label">شهادات متقدمة:</span>
+          <p class="topic-text"><strong>OSCP</strong> (الأفضل للـ Pentesting)، <strong>GCIH</strong>، <strong>GREM</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- المرحلة 4 -->
+  <div class="phase">
+    <div class="phase-title">
+      <i class="ti ti-flame"></i>
+      المرحلة 4: المرحلة المتقدمة والعمل (مستمر)
+    </div>
+    <p class="phase-duration">الخبرة الحقيقية والتطبيقات والمسار الوظيفي</p>
+    
+    <ul class="content-list">
+      <li>المسابقات: Capture The Flag (DEFCON، PicoCTF)</li>
+      <li>برامج Bug Bounty: HackerOne، Bugcrowd</li>
+      <li>ساهم في المشاريع مفتوحة المصدر</li>
+      <li>اكتب مقالات عن ما تتعلمه</li>
+      <li>ابحث عن وظائف: محلل SOC، اختباري اختراق، مهندس أمان</li>
+    </ul>
+  </div>
+
+  <!-- الموارد -->
+  <div class="phase">
+    <div class="phase-title">
+      <i class="ti ti-bookmark"></i>
+      الروابط المهمة
+    </div>
+    
+    <div class="button-group">
+      <button onclick="openLink('https://www.youtube.com/@ProfessorMesser')">Professor Messer</button>
+      <button onclick="openLink('https://www.youtube.com/@NetworkChuck')">NetworkChuck</button>
+      <button onclick="openLink('https://tryhackme.com')">TryHackMe</button>
+      <button onclick="openLink('https://www.hackthebox.eu')">HackTheBox</button>
+      <button onclick="openLink('https://portswigger.net/web-security')">PortSwigger</button>
+      <button onclick="openLink('https://shodan.io')">Shodan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleSection(btn, sectionId) {
+  const section = document.getElementById(sectionId);
+  const icon = btn.querySelector('.expand-icon');
+  section.classList.toggle('show');
+  icon.classList.toggle('rotated');
+}
+
+function openLink(url) {
+  window.open(url, '_blank');
+}
+</script>
+</html>
