@@ -2,34 +2,35 @@ import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, Check, ChevronDown, ChevronUp, FileCode } from 'lucide-react';
 
-const syntaxRules = [
-  { pattern: /\/\/.*/g, className: 'comment' },
-  { pattern: /\/\*[\s\S]*?\*\//g, className: 'comment' },
-  { pattern: /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/g, className: 'string' },
-  { pattern: /\b(import|from|export|default|const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|try|catch|finally|throw|async|await|yield|class|extends|super|this|typeof|instanceof|void|delete|in|of)\b/g, className: 'keyword' },
-  { pattern: /\b(true|false|null|undefined|NaN|Infinity)\b/g, className: 'literal' },
-  { pattern: /\b(\d+(?:\.\d+)?)\b/g, className: 'number' },
-  { pattern: /\b(import|from|export|default)\b/g, className: 'module-keyword' },
-  { pattern: /(?<=\b(import|from)\s+)"[^"]*"/g, className: 'module-path' },
-  { pattern: /&lt;\/?[\w-]+(?:\s+[\w-]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[\w-]+))?)*\s*\/?&gt;/g, className: 'tag' },
-  { pattern: /{[\s\S]*?}/g, className: 'jsx-expression' },
-];
+const TOKEN_PATTERN = /\/\*[\s\S]*?\*\/|\/\/[^\n]*|<\/?[\w-]+(?:\s+[^<>]*?)?\/?>|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|\b(?:import|from|export|default|const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|try|catch|finally|throw|async|await|yield|class|extends|super|this|typeof|instanceof|void|delete|in|of)\b|\b(?:true|false|null|undefined|NaN|Infinity)\b|\b\d+(?:\.\d+)?\b/g;
 
-function highlightSyntax(code) {
-  const escaped = code
+function escapeHtml(value) {
+  return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
 
-  let highlighted = escaped;
+function getTokenClass(token) {
+  if (token.startsWith('//') || token.startsWith('/*')) return 'comment';
+  if (token.startsWith('<')) return 'tag';
+  if (/^["'`]/.test(token)) return 'string';
+  if (/^\d/.test(token)) return 'number';
+  if (/^(?:true|false|null|undefined|NaN|Infinity)$/.test(token)) return 'literal';
+  return 'keyword';
+}
 
-  for (const rule of syntaxRules) {
-    highlighted = highlighted.replace(rule.pattern, (match) => {
-      return `<span class="code-${rule.className}">${match}</span>`;
-    });
+function highlightSyntax(code) {
+  let result = '';
+  let lastIndex = 0;
+
+  for (const match of code.matchAll(TOKEN_PATTERN)) {
+    result += escapeHtml(code.slice(lastIndex, match.index));
+    result += `<span class="code-${getTokenClass(match[0])}">${escapeHtml(match[0])}</span>`;
+    lastIndex = match.index + match[0].length;
   }
 
-  return highlighted;
+  return result + escapeHtml(code.slice(lastIndex));
 }
 
 function getLineCount(code) {

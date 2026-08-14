@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
@@ -6,7 +6,6 @@ import {
   Play, RotateCcw, Copy, Lightbulb, Lock, Unlock,
   BookOpen, Code, Target, Star,
   ExternalLink, Clock, Shield,
-  Key, Globe,
   Layers, Zap,
   CheckCircle, Circle, Award,
   ChevronLeft, List,
@@ -15,9 +14,9 @@ import {
 import Badge from '../components/common/Badge';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
-import { useApp } from '../context/AppContext';
 import { useToast } from '../components/common/Toast';
 import { securityCategories, difficultyConfigMap } from '../data/securityLabsData';
+import { runSandboxedCode } from '../utils/runSandboxedCode';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -235,7 +234,6 @@ function ValidationCheckItem({ check, index, onCheck, result }) {
 function HintItem({ hints, revealedIndex, onReveal }) {
   const [expanded, setExpanded] = useState(false);
 
-  const currentHint = revealedIndex < hints.length ? hints[revealedIndex] : null;
   const allRevealed = revealedIndex >= hints.length;
 
   return (
@@ -625,60 +623,58 @@ function LabListView({ category, onSelectLab, onBack }) {
   );
 }
 
-let labExecutionCache = {};
-
-function LabDetailView({ category, lab, onBackToCategory, onNavigateLab }) {
+function LabDetailView({ category, lab, onBackToCategory }) {
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const sandboxRunRef = useRef({ id: 0, controller: null });
 
   const [activeTab, setActiveTab] = useState('theory');
   const [userCode, setUserCode] = useState('');
   const [outputs, setOutputs] = useState([]);
   const [validationResults, setValidationResults] = useState({});
   const [hintRevealIndex, setHintRevealIndex] = useState(-1);
-  const [showSolution, setShowSolution] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [completedObjectives, setCompletedObjectives] = useState([]);
+
+  const cancelSandboxRun = useCallback(() => {
+    sandboxRunRef.current.id += 1;
+    sandboxRunRef.current.controller?.abort();
+    sandboxRunRef.current.controller = null;
+  }, []);
+
+  const executeSandbox = useCallback(async (code) => {
+    sandboxRunRef.current.controller?.abort();
+    const controller = new AbortController();
+    const id = sandboxRunRef.current.id + 1;
+    sandboxRunRef.current = { id, controller };
+    const result = await runSandboxedCode(code, { signal: controller.signal });
+    if (sandboxRunRef.current.id !== id || controller.signal.aborted) return null;
+    sandboxRunRef.current.controller = null;
+    return result;
+  }, []);
 
   useEffect(() => {
     setUserCode(lab.starterCode);
     setOutputs([]);
     setValidationResults({});
     setHintRevealIndex(-1);
-    setShowSolution(false);
     setCompletedObjectives([]);
     setActiveTab('theory');
-    labExecutionCache = {};
-  }, [lab.id]);
+    setIsRunning(false);
+  }, [lab.id, lab.starterCode]);
 
-  const runCode = useCallback(() => {
+  useEffect(() => cancelSandboxRun, [lab.id, cancelSandboxRun]);
+
+  const runCode = useCallback(async () => {
     setIsRunning(true);
     setOutputs([]);
 
-    setTimeout(() => {
-      try {
-        const captured = [];
-        const mockLog = (...args) => {
-          captured.push(args.map((a) => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
-        };
-        const fn = new Function('console', userCode);
-        fn({ log: mockLog, warn: mockLog, error: (...args) => captured.push(`خطأ: ${args.map(String).join(' ')}`) });
-
-        if (captured.length === 0) {
-          captured.push('(تم تنفيذ الكود بنجاح)');
-        }
-
-        setOutputs(captured);
-        labExecutionCache = { outputs: captured, code: userCode };
-        showToast('تم تنفيذ الكود بنجاح', 'success');
-      } catch (err) {
-        setOutputs([`خطأ: ${err.message}`]);
-        labExecutionCache = { outputs: [`خطأ: ${err.message}`], code: userCode };
-        showToast('حدث خطأ في تنفيذ الكود', 'error');
-      }
-      setIsRunning(false);
-    }, 300);
-  }, [userCode, showToast]);
+    const result = await executeSandbox(userCode);
+    if (!result) return;
+    setOutputs(result.outputs);
+    showToast(result.ok ? 'تم تنفيذ الكود بنجاح' : 'حدث خطأ في تنفيذ الكود', result.ok ? 'success' : 'error');
+    setIsRunning(false);
+  }, [userCode, showToast, executeSandbox]);
 
   const handleValidationCheck = useCallback((index) => {
     const check = lab.validationChecks[index];
@@ -727,11 +723,13 @@ function LabDetailView({ category, lab, onBackToCategory, onNavigateLab }) {
   }, [showToast]);
 
   const handleResetCode = useCallback(() => {
+    cancelSandboxRun();
     setUserCode(lab.starterCode);
     setOutputs([]);
     setValidationResults({});
+    setIsRunning(false);
     showToast('تم إعادة تعيين الكود', 'info');
-  }, [lab.starterCode, showToast]);
+  }, [lab.starterCode, showToast, cancelSandboxRun]);
 
   const toggleCompletedObjective = useCallback((index) => {
     setCompletedObjectives((prev) =>
@@ -1081,7 +1079,6 @@ function LabDetailView({ category, lab, onBackToCategory, onNavigateLab }) {
 export default function SecurityLabRunner() {
   const { categoryId, labId } = useParams();
   const navigate = useNavigate();
-  const { theme } = useApp();
 
   const hasCategory = categoryId && categoryId !== 'undefined';
   const hasLab = labId && labId !== 'undefined';
@@ -1126,7 +1123,6 @@ export default function SecurityLabRunner() {
             category={category}
             lab={lab}
             onBackToCategory={() => navigate(`/security-labs/${categoryId}`)}
-            onNavigateLab={handleSelectLab}
           />
         )}
       </section>

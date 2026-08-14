@@ -2,21 +2,28 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Flag, Search, Filter, Plus, Star, Clock, Trophy,
-  Award, Target, BarChart3, PieChart, Hash, X,
-  CheckCircle, Circle, Edit2, Trash2, Save, BookOpen,
-  Globe, Shield, Code, Lock, Zap, Users, TrendingUp,
-  Medal, ArrowUp, Check, ChevronDown
+  BarChart3, PieChart, X, CheckCircle, Circle, Edit2,
+  Trash2, Save, Globe, Code, Lock, Zap, Users,
+  TrendingUp, Medal, Check
 } from 'lucide-react';
 import {
   PieChart as RePieChart, Pie, Cell, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts';
 import Button from '../components/common/Button';
-import Card from '../components/common/Card';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Loading from '../components/common/Loading';
 import { useToast } from '../components/common/Toast';
+
+async function requestJson(url, options) {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || `Request failed with status ${response.status}`);
+  }
+  return response.json();
+}
 
 const categories = [
   { id: 'all', label: 'الكل', icon: Filter },
@@ -372,8 +379,7 @@ export default function CTFTracker() {
 
   const fetchChallenges = async () => {
     try {
-      const res = await fetch('/api/ctf');
-      const data = await res.json();
+      const data = await requestJson('/api/ctf');
       setChallenges(data);
     } catch {
       setChallenges([]);
@@ -382,8 +388,7 @@ export default function CTFTracker() {
 
   const fetchLeaderboard = async () => {
     try {
-      const res = await fetch('/api/ctf/leaderboard');
-      const data = await res.json();
+      const data = await requestJson('/api/ctf/leaderboard');
       setLeaderboard(data);
     } catch {
       setLeaderboard([]);
@@ -440,14 +445,14 @@ export default function CTFTracker() {
   const handleSave = async (formData) => {
     try {
       if (editChallenge) {
-        await fetch(`/api/ctf/${editChallenge.id}`, {
+        await requestJson(`/api/ctf/${editChallenge.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
         });
         showToast('تم تحديث التحدي', 'success');
       } else {
-        await fetch('/api/ctf', {
+        await requestJson('/api/ctf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
@@ -456,7 +461,7 @@ export default function CTFTracker() {
       }
       setShowAddModal(false);
       setEditChallenge(null);
-      fetchChallenges();
+      await Promise.all([fetchChallenges(), fetchLeaderboard()]);
     } catch {
       showToast('فشل في حفظ التحدي', 'error');
     }
@@ -464,9 +469,9 @@ export default function CTFTracker() {
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`/api/ctf/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...challenges.find(c => c.id === id), deleted: true }) });
+      await requestJson(`/api/ctf/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...challenges.find(c => c.id === id), deleted: true }) });
       showToast('تم حذف التحدي', 'success');
-      fetchChallenges();
+      await Promise.all([fetchChallenges(), fetchLeaderboard()]);
     } catch {
       showToast('فشل في حذف التحدي', 'error');
     }
@@ -475,15 +480,14 @@ export default function CTFTracker() {
   const handleSolve = async (id, solveData) => {
     try {
       const challenge = challenges.find(c => c.id === id);
-      await fetch(`/api/ctf/${id}`, {
+      await requestJson(`/api/ctf/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...challenge, ...solveData, status: 'solved' }),
       });
       showToast('تم تسجيل الحل!', 'success');
       setSolveChallenge(null);
-      fetchChallenges();
-      fetchLeaderboard();
+      await Promise.all([fetchChallenges(), fetchLeaderboard()]);
     } catch {
       showToast('فشل في تسجيل الحل', 'error');
     }

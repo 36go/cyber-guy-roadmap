@@ -9,6 +9,7 @@ import {
 import Badge from '../components/common/Badge';
 import Button from '../components/common/Button';
 import { useToast } from '../components/common/Toast';
+import { runSandboxedCode } from '../utils/runSandboxedCode';
 
 const LABS = {
   'html-css': {
@@ -287,7 +288,6 @@ function simulateSQL(query) {
 
 function simulatePython(code) {
   const outputs = [];
-  const lines = code.split('\n');
 
   const printMatches = code.match(/print\s*\(([^)]+)\)/g);
   if (printMatches) {
@@ -349,13 +349,6 @@ function simulatePython(code) {
 }
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
-const METHOD_COLORS = {
-  GET: 'text-success',
-  POST: 'text-warning',
-  PUT: 'text-accent',
-  DELETE: 'text-danger',
-  PATCH: 'text-secondary',
-};
 
 function TabButton({ active, onClick, children }) {
   return (
@@ -372,7 +365,7 @@ function TabButton({ active, onClick, children }) {
   );
 }
 
-function CodeEditor({ value, onChange, placeholder, language, readOnly }) {
+function CodeEditor({ value, onChange, placeholder, readOnly }) {
   return (
     <textarea
       value={value}
@@ -510,6 +503,7 @@ export default function LabPlayground() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const iframeRef = useRef(null);
+  const sandboxRunRef = useRef({ id: 0, controller: null });
 
   const lab = LABS[labId];
   const [copied, setCopied] = useState(false);
@@ -522,7 +516,6 @@ export default function LabPlayground() {
   const [sqlCode, setSqlCode] = useState('');
   const [outputs, setOutputs] = useState([]);
   const [sqlResult, setSqlResult] = useState(null);
-  const [showTables, setShowTables] = useState(false);
 
   const [apiUrl, setApiUrl] = useState('https://jsonplaceholder.typicode.com/posts/1');
   const [apiMethod, setApiMethod] = useState('GET');
@@ -534,8 +527,42 @@ export default function LabPlayground() {
   const [jsTab, setJsTab] = useState('code');
   const [sqlTab, setSqlTab] = useState('query');
 
+  const cancelSandboxRun = useCallback(() => {
+    sandboxRunRef.current.id += 1;
+    sandboxRunRef.current.controller?.abort();
+    sandboxRunRef.current.controller = null;
+  }, []);
+
+  const executeSandbox = useCallback(async (code) => {
+    sandboxRunRef.current.controller?.abort();
+    const controller = new AbortController();
+    const id = sandboxRunRef.current.id + 1;
+    sandboxRunRef.current = { id, controller };
+    const result = await runSandboxedCode(code, { signal: controller.signal });
+    if (sandboxRunRef.current.id !== id || controller.signal.aborted) return null;
+    sandboxRunRef.current.controller = null;
+    return result;
+  }, []);
+
+  const updatePreview = useCallback(() => {
+    if (!iframeRef.current) return;
+    const combined = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; form-action 'none'; object-src 'none'; base-uri 'none'">
+  <style>${cssCode}</style>
+</head>
+<body>${htmlCode.replace(/<!DOCTYPE html>[\s\S]*?<body[^>]*>/i, '').replace(/<\/body>[\s\S]*?<\/html>/i, '')}
+</body>
+</html>`;
+    iframeRef.current.srcdoc = combined;
+  }, [htmlCode, cssCode]);
+
   const resetCode = useCallback(() => {
     if (!lab) return;
+    cancelSandboxRun();
     setHtmlCode(LABS['html-css'].starterHTML);
     setCssCode(LABS['html-css'].starterCSS);
     setJsCode(LABS.javascript.starterCode);
@@ -548,7 +575,7 @@ export default function LabPlayground() {
     setHtmlTab('html');
     setJsTab('code');
     setSqlTab('query');
-  }, [lab]);
+  }, [lab, cancelSandboxRun]);
 
   useEffect(() => {
     if (!lab) {
@@ -558,6 +585,8 @@ export default function LabPlayground() {
     resetCode();
   }, [labId, lab, navigate, resetCode]);
 
+  useEffect(() => cancelSandboxRun, [labId, cancelSandboxRun]);
+
   useEffect(() => {
     if (labId === 'html-css' || labId === 'javascript') {
       if (labId === 'html-css' && htmlTab === 'preview' && iframeRef.current) {
@@ -565,21 +594,6 @@ export default function LabPlayground() {
       }
     }
   }, [htmlTab, htmlCode, cssCode, labId, updatePreview]);
-
-  const updatePreview = useCallback(() => {
-    if (!iframeRef.current) return;
-    const combined = `<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>${cssCode}</style>
-</head>
-<body>${htmlCode.replace(/<!DOCTYPE html>[\s\S]*?<body[^>]*>/i, '').replace(/<\/body>[\s\S]*?<\/html>/i, '')}
-</body>
-</html>`;
-    iframeRef.current.srcdoc = combined;
-  }, [htmlCode, cssCode]);
 
   const handleCopy = (content) => {
     navigator.clipboard.writeText(content);
@@ -599,28 +613,14 @@ export default function LabPlayground() {
     showToast('تم تحميل الملف', 'info');
   };
 
-  const runJavaScript = () => {
-    const captured = [];
-    const mockLog = (...args) => {
-      captured.push(args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
-    };
-    try {
-      const fn = new Function('console', jsCode);
-      fn({ log: mockLog, warn: mockLog, error: (...args) => captured.push(`خطأ: ${args.map(String).join(' ')}`) });
-      if (captured.length === 0) captured.push('(تم تنفيذ الكود بنجاح)');
-      setOutputs(captured);
-      setJsTab('output');
-    } catch (err) {
-      setOutputs([`خطأ: ${err.message}`]);
-      setJsTab('output');
-    }
+  const runJavaScript = async () => {
+    const result = await executeSandbox(jsCode);
+    if (!result) return;
+    setOutputs(result.outputs);
+    setJsTab('output');
   };
 
-  const runTypeScript = () => {
-    const captured = [];
-    const mockLog = (...args) => {
-      captured.push(args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
-    };
+  const runTypeScript = async () => {
     try {
       const transpiled = tsCode
         .replace(/: (string|number|boolean|void|any|User\[\]|T\[\]|T|undefined\[\])\b/g, '')
@@ -628,11 +628,9 @@ export default function LabPlayground() {
         .replace(/interface\s+\w+\s*\{[\s\S]*?\}/g, '')
         .replace(/<\w+>/g, '')
         .replace(/as\s+\w+/g, '');
-      const fn = new Function('console', transpiled);
-      fn({ log: mockLog, warn: mockLog, error: (...args) => captured.push(`خطأ: ${args.map(String).join(' ')}`) });
-      if (captured.length === 0) captured.push('(تم تنفيذ الكود بنجاح)');
-      captured.unshift('> ملاحظة: تم إزالة أنواع TypeScript للتشغيل في المتصفح');
-      setOutputs(captured);
+      const result = await executeSandbox(transpiled);
+      if (!result) return;
+      setOutputs(['> ملاحظة: تم إزالة أنواع TypeScript للتشغيل في المتصفح', ...result.outputs]);
     } catch (err) {
       setOutputs([`> ملاحظة: تم إزالة أنواع TypeScript للتشغيل في المتصفح`, `خطأ: ${err.message}`]);
     }
